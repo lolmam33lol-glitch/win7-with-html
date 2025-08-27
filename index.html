@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Windows 7 Web Clone</title>
+<style>
+/* Reset & basic */
+*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;}
+body,html{width:100%;height:100%;overflow:hidden;background:url('https://wallpaperaccess.com/full/168869.jpg') no-repeat center center/cover;}
+/* Taskbar */
+#taskbar{position:absolute;bottom:0;width:100%;height:40px;background:rgba(0,0,0,0.7);display:flex;align-items:center;padding:0 10px;}
+#start-btn{width:36px;height:36px;background:url('https://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2009.svg') no-repeat center/contain;cursor:pointer;}
+#task-icons{flex:1;display:flex;align-items:center;gap:5px;overflow-x:auto;}
+#clock{color:white;font-size:14px;margin-left:auto;}
+/* Start Menu */
+#start-menu{position:absolute;bottom:40px;left:10px;width:200px;background:rgba(50,50,50,0.95);border:1px solid #000;border-radius:5px;display:none;padding:10px;}
+#start-menu h3{color:white;margin-bottom:5px;}
+.start-item{color:white;padding:5px;cursor:pointer;border-radius:3px;}
+.start-item:hover{background:rgba(255,255,255,0.2);}
+/* Windows */
+.window{position:absolute;width:400px;height:300px;background:rgba(255,255,255,0.85);backdrop-filter:blur(10px);border:1px solid #aaa;border-radius:5px;box-shadow:0 0 10px rgba(0,0,0,0.5);overflow:hidden;}
+.title-bar{height:30px;background:rgba(0,120,215,0.8);color:white;padding:5px;cursor:move;display:flex;justify-content:space-between;align-items:center;}
+.title-bar span{flex:1;}
+.close-btn{width:20px;height:20px;background:red;color:white;text-align:center;line-height:20px;border-radius:3px;cursor:pointer;}
+.window-content{padding:5px;height:calc(100% - 30px);overflow:auto;}
+iframe{width:100%;height:100%;border:none;}
+/* Gadgets */
+#gadgets{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:5px;}
+.gadget{width:120px;height:60px;background:rgba(0,0,0,0.5);color:white;padding:5px;border-radius:5px;text-align:center;backdrop-filter:blur(5px);}
+</style>
+</head>
+<body>
+<!-- Taskbar -->
+<div id="taskbar">
+    <div id="start-btn"></div>
+    <div id="task-icons"></div>
+    <div id="clock"></div>
+</div>
+
+<!-- Start Menu -->
+<div id="start-menu">
+    <h3>All Programs</h3>
+    <div class="start-item" onclick="openWindow('Computer')">Computer</div>
+    <div class="start-item" onclick="openWindow('Documents')">Documents</div>
+    <div class="start-item" onclick="openWindow('Internet Explorer')">Internet Explorer</div>
+    <div class="start-item" onclick="openWindow('Control Panel')">Control Panel</div>
+    <div class="start-item" onclick="shutdown()">Shutdown</div>
+</div>
+
+<!-- Gadgets -->
+<div id="gadgets">
+    <div class="gadget" id="clock-gadget"></div>
+    <div class="gadget" id="cpu-gadget">CPU: 42%</div>
+</div>
+
+<script>
+// Clock
+function updateClock(){
+    const c = new Date();
+    const str = c.toLocaleTimeString();
+    document.getElementById('clock').innerText = str;
+    document.getElementById('clock-gadget').innerText = str;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// Start Menu Toggle
+const startBtn = document.getElementById('start-btn');
+const startMenu = document.getElementById('start-menu');
+startBtn.addEventListener('click',()=>{startMenu.style.display = startMenu.style.display==='block'?'none':'block';});
+
+// Windows Logic
+let zIndexCounter = 1;
+function openWindow(title){
+    const win = document.createElement('div');
+    win.className = 'window';
+    win.style.top = '50px';
+    win.style.left = '50px';
+    win.style.zIndex = zIndexCounter++;
+    
+    const titleBar = document.createElement('div');
+    titleBar.className='title-bar';
+    const span = document.createElement('span'); span.innerText=title;
+    const close = document.createElement('div'); close.className='close-btn'; close.innerText='X';
+    close.onclick=()=>win.remove();
+    titleBar.appendChild(span);
+    titleBar.appendChild(close);
+    win.appendChild(titleBar);
+    
+    const content = document.createElement('div');
+    content.className='window-content';
+    if(title==='Internet Explorer'){
+        const iframe = document.createElement('iframe');
+        iframe.src='https://www.bing.com';
+        content.appendChild(iframe);
+    } else if(title==='Control Panel'){
+        content.innerHTML='<p>Settings toggles go here</p>';
+    } else if(title==='Computer'){
+        content.innerHTML='<p>Local Disk (C:)<br>Documents<br>Pictures</p>';
+    } else if(title==='Documents'){
+        content.innerHTML='<p>My Documents content here</p>';
+    }
+    win.appendChild(content);
+    document.body.appendChild(win);
+    
+    dragElement(win, titleBar);
+}
+
+// Drag Function
+function dragElement(elmnt, handle) {
+  let pos1=0,pos2=0,pos3=0,pos4=0;
+  handle.onmousedown = dragMouseDown;
+  function dragMouseDown(e){
+    e=e||window.event; e.preventDefault();
+    pos3=e.clientX; pos4=e.clientY;
+    document.onmouseup=closeDragElement;
+    document.onmousemove=elementDrag;
+  }
+  function elementDrag(e){
+    e=e||window.event; e.preventDefault();
+    pos1=pos3-e.clientX; pos2=pos4-e.clientY;
+    pos3=e.clientX; pos4=e.clientY;
+    elmnt.style.top=(elmnt.offsetTop-pos2)+'px';
+    elmnt.style.left=(elmnt.offsetLeft-pos1)+'px';
+  }
+  function closeDragElement(){
+    document.onmouseup=null;
+    document.onmousemove=null;
+  }
+}
+
+// Shutdown
+function shutdown(){
+    document.body.innerHTML='<h1 style="color:white;text-align:center;margin-top:200px;font-size:50px;">Shutting down...</h1>';
+}
+</script>
+</body>
+</html>
